@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arsip Dokumen Dinas Kearsipan Pekanbaru</title>
+    <style>
+        * {margin:0; padding:0; font-family:Arial, sans-serif;}
+        body {background:#eef2f5; padding:15px; max-width:750px; margin:0 auto;}
+        .header {background:#2c3e50; color:white; padding:20px; border-radius:10px; text-align:center; margin-bottom:20px;}
+        .kotak {background:white; padding:20px; border-radius:10px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+        h2 {color:#2c3e50; margin-bottom:15px; font-size:18px;}
+        .btn {padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-size:15px; margin:5px;}
+        .btn-unggah {background:#27ae60; color:white;}
+        .btn-unggah:hover {background:#219653;}
+        .btn-buka {background:#3498db; color:white; text-decoration:none; display:inline-block;}
+        .btn-buka:hover {background:#2980b9;}
+        .btn-hapus {background:#e74c3c; color:white;}
+        .btn-hapus:hover {background:#c0392b;}
+        #fileInput {display:none;}
+        .item {padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;}
+        .item:last-child {border-bottom:none;}
+        .nama-file {font-weight:bold; color:#2c3e50;}
+        .info-kecil {font-size:12px; color:#888; margin-top:3px;}
+        .kosong {text-align:center; padding:30px; color:#999;}
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🏛️ Arsip Dokumen</h1>
+    <p>Dinas Kearsipan Kota Pekanbaru</p>
+</div>
+
+<div class="kotak">
+    <h2>➕ Tambah Dokumen</h2>
+    <p style="color:#666; font-size:14px; margin-bottom:10px;">Format: PDF, DOC, DOCX</p>
+    <label class="btn btn-unggah" for="fileInput">Pilih File</label>
+    <input type="file" id="fileInput" accept=".pdf,.doc,.docx">
+    <button class="btn btn-unggah" onclick="simpan()">Simpan Dokumen</button>
+</div>
+
+<div class="kotak">
+    <h2>📑 Daftar Arsip</h2>
+    <div id="daftar"></div>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem('arsipPku') || '[]');
+tampil();
+
+function simpan() {
+    const input = document.getElementById('fileInput');
+    if (!input.files.length) return alert('⚠️ Pilih file dulu!');
+    
+    const f = input.files[0];
+    const pembaca = new FileReader();
+    pembaca.onload = e => {
+        const dok = {
+            id: Date.now(),
+            nama: f.name,
+            ukuran: (f.size/1024).toFixed(1)+' KB',
+            isi: e.target.result,
+            waktu: new Date().toLocaleString('id-ID')
+        };
+        data.unshift(dok);
+        localStorage.setItem('arsipPku', JSON.stringify(data));
+        tampil();
+        input.value = '';
+        alert('✅ Tersimpan!');
+    };
+    pembaca.readAsDataURL(f);
+}
+
+function tampil() {
+    const wadah = document.getElementById('daftar');
+    if (!data.length) {
+        wadah.innerHTML = '<div class="kosong">Belum ada dokumen yang disimpan</div>';
+        return;
+    }
+    wadah.innerHTML = data.map(d => `
+        <div class="item">
+            <div>
+                <div class="nama-file">${d.nama}</div>
+                <div class="info-kecil">${d.waktu} · ${d.ukuran}</div>
+            </div>
+            <div>
+                <a class="btn btn-buka" href="${d.isi}" download="${d.nama}">Unduh</a>
+                <button class="btn btn-hapus" onclick="hapus(${d.id})">Hapus</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function hapus(id) {
+    if (confirm('Yakin hapus?')) {
+        data = data.filter(d => d.id !== id);
+        localStorage.setItem('arsipPku', JSON.stringify(data));
+        tampil();
+    }
+}
+</script>
+
+</body>
+</html>
